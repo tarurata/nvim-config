@@ -31,21 +31,15 @@ require("lazy").setup({
   { "junegunn/fzf" },                       -- Fuzzy finder
   { "junegunn/fzf.vim" },                   -- Fuzzy finder Vim integration
   { "easymotion/vim-easymotion" },          -- Vim motions on speed
-  { "Shougo/ddc.vim" },                     -- Dark powered asynchronous completion framework
-  { "vim-denops/denops.vim" },              -- Vim/Neovim plugin framework written in Deno
-  { "Shougo/pum.vim" },                     -- Popup menu for Vim
-  { "Shougo/ddc-source-around" },           -- Around source for ddc.vim
-  { "Shougo/ddc-source-lsp" },              -- LSP source for ddc.vim
+  { "hrsh7th/nvim-cmp" },                   -- Completion plugin
+  { "hrsh7th/cmp-nvim-lsp" },               -- LSP source for nvim-cmp
+  { "hrsh7th/cmp-buffer" },                 -- Buffer completions
+  { "hrsh7th/cmp-path" },                   -- Path completions
   { "neovim/nvim-lspconfig" },              -- Quickstart configs for Nvim LSP
   { "williamboman/mason.nvim" },            -- Portable package manager for Neovim
   { "williamboman/mason-lspconfig.nvim" },  -- Bridge between mason.nvim and lspconfig
   { "jose-elias-alvarez/null-ls.nvim" },    -- Use Neovim as a language server
   { "nvim-lua/plenary.nvim" },              -- Lua functions library
-  { "LumaKernel/ddc-file" },                -- File source for ddc.vim
-  { "Shougo/ddc-matcher_head" },            -- Head matcher for ddc.vim
-  { "Shougo/ddc-sorter_rank" },             -- Rank sorter for ddc.vim
-  { "Shougo/ddc-converter_remove_overlap" },-- Overlap remover for ddc.vim
-  { "Shougo/ddc-ui-pum" },                  -- Popup menu UI for ddc.vim
   { "folke/noice.nvim" },                   -- Highly experimental plugin that replaces the UI for messages, cmdline and the popupmenu
   { "MunifTanjim/nui.nvim" },               -- UI Component Library for Neovim
   { "github/copilot.vim" },                 -- GitHub Copilot for Vim
@@ -83,9 +77,27 @@ require('mason').setup({
 
 require('mason-lspconfig').setup()
 
+-- nvim-cmp setup
+local cmp = require('cmp')
+
+cmp.setup({
+  mapping = cmp.mapping.preset.insert({
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-x>'] = cmp.mapping.abort(),
+    ['<CR>'] = cmp.mapping.confirm({ select = true }),
+    ['<C-n>'] = cmp.mapping.select_next_item(),
+    ['<C-p>'] = cmp.mapping.select_prev_item(),
+  }),
+  sources = cmp.config.sources({
+    { name = 'nvim_lsp' },
+    { name = 'buffer' },
+    { name = 'path' },
+  }),
+})
+
+-- LSP setup with nvim-cmp capabilities
 local nvim_lsp = require('lspconfig')
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('ddc_source_lsp').make_client_capabilities(capabilities)
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
 require('mason-lspconfig').setup_handlers({
   function(server_name)
@@ -103,53 +115,6 @@ require('mason-lspconfig').setup_handlers({
   end
 })
 
--- DDC settings
-vim.fn['ddc#custom#patch_global']('ui', 'pum')
-vim.fn['ddc#custom#patch_global']('sources', { 'lsp', 'around', 'file' })
-vim.fn['ddc#custom#patch_global']('sourceOptions', {
-  ['_'] = { -- Default options for all sources
-    matchers = { 'matcher_head' },
-    sorters = { 'sorter_rank' },
-    converters = { 'converter_remove_overlap' },
-  },
-  ['lsp'] = {
-    mark = '🗣️',
-    forceCompletionPattern = '\\.\\w*|:\\w*|->\\w*',
-  },
-  -- ['copilot'] = {
-  --   mark = '🤖',
-  --   Copilot also can be included to ddc.vim, but it requires to install ddc-source-copilot
-  -- },
-  ['around'] = {
-    mark = '🌍',
-  },
-  ['file'] = {
-    mark = '🗂️',
-    isVolatile = true,
-    forceCompletionPattern = '\\S/\\S*',
-  },
-})
-
-vim.fn['ddc#custom#patch_global']('sourceParams', {
-  ['lsp'] = {
-    snippetEngine = vim.fn['denops#callback#register'](function(body)
-      return vim.fn['vsnip#anonymous'](body)
-    end),
-    enableResolveItem = true,
-    enableAdditionalTextEdit = true,
-  },
-})
-
--- LSP capabilities for ddc
-capabilities = require("ddc_source_lsp").make_client_capabilities()
-
--- Specific setup for denols
-require('lspconfig').denols.setup({
-  capabilities = capabilities,
-})
-
-vim.fn['ddc#enable']()
-
 -- LSP settings for Make "vim" global variable available in Lua files
 require('lspconfig').lua_ls.setup({
     settings = {
@@ -163,11 +128,6 @@ require('lspconfig').lua_ls.setup({
 
 -- Autocommand for formatting Python files
 vim.cmd [[autocmd BufWritePre *.py lua vim.lsp.buf.format()]]
-
--- Key mappings for PUM
-vim.api.nvim_set_keymap('i', '<C-l>', 'pum#visible() ? "<Cmd>call pum#map#confirm()<CR>" : "<C-Space>"', { noremap = true, silent = true, expr = true })
--- vim.api.nvim_set_keymap('i', '<C-n>', '<Cmd>call pum#map#select_relative(+1)<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('i', '<C-p>', '<Cmd>call pum#map#select_relative(-1)<CR>', { noremap = true, silent = true })
 
 -- Copilot settings
 vim.g.copilot_no_tab_map = true
