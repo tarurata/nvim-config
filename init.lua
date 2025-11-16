@@ -44,9 +44,31 @@ require("lazy").setup({
   { "MunifTanjim/nui.nvim" },               -- UI Component Library for Neovim
   { "github/copilot.vim" },                 -- GitHub Copilot for Vim
   {
-    "robitx/gp.nvim",                       -- ChatGPT and other LLM integration
+    "olimorris/codecompanion.nvim",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+    },
     config = function()
-      require("gp").setup()
+      require("codecompanion").setup({
+        adapters = {
+          openai = function()
+            return require("codecompanion.adapters").extend("openai", {
+              env = {
+                api_key = "OPENAI_API_KEY",
+              },
+            })
+          end,
+        },
+        strategies = {
+          chat = {
+            adapter = "openai",
+          },
+          inline = {
+            adapter = "openai",
+          },
+        },
+      })
     end,
   },
   {
@@ -129,33 +151,32 @@ vim.cmd [[autocmd BufWritePre *.py lua vim.lsp.buf.format()]]
 vim.g.copilot_no_tab_map = true
 vim.api.nvim_set_keymap('i', '<Tab>', 'copilot#Accept("<CR>")', { silent = true, expr = true })
 
--- gp.nvim configuration
--- Set your API key as environment variable:
--- export OPENAI_API_KEY="your-key-here"
--- or for Claude: export ANTHROPIC_API_KEY="your-key-here"
-require("gp").setup({
-  providers = {
-    openai = {
-      endpoint = "https://api.openai.com/v1/chat/completions",
-      secret = os.getenv("OPENAI_API_KEY"),
-    },
-  },
-  agents = {
-    {
-      name = "ChatGPT4o-mini",
-      chat = true,
-      command = false,
-      model = { model = "gpt-4o-mini", temperature = 0.7, top_p = 1 },
-      system_prompt = "You are a helpful assistant.",
-    },
-  },
-})
+-- codecompanion.nvim key mappings
+-- Set your API key as environment variable: export OPENAI_API_KEY="your-key-here"
+vim.keymap.set("n", "<leader>gc", "<cmd>CodeCompanionChat Toggle<CR>", { desc = "Toggle AI chat" })
+vim.keymap.set("v", "<leader>gc", "<cmd>CodeCompanionChat Toggle<CR>", { desc = "Toggle AI chat with selection" })
+vim.keymap.set("v", "<leader>ga", "<cmd>CodeCompanionChat Add<CR>", { desc = "Add selection to chat" })
+vim.keymap.set("n", "<leader>ga", "<cmd>CodeCompanionActions<CR>", { desc = "Open AI actions" })
+vim.keymap.set("v", "<leader>ga", "<cmd>CodeCompanionActions<CR>", { desc = "Open AI actions for selection" })
 
--- gp.nvim key mappings
-vim.keymap.set("n", "<leader>gc", "<cmd>GpChatNew<CR>", { desc = "New AI chat" })
-vim.keymap.set("v", "<leader>gp", ":<C-u>'<,'>GpChatPaste<CR>", { desc = "Paste selection to chat" })
-vim.keymap.set("v", "<leader>gr", ":<C-u>'<,'>GpRewrite<CR>", { desc = "AI rewrite selection" })
-vim.keymap.set("v", "<leader>ga", ":<C-u>'<,'>GpAppend<CR>", { desc = "AI append after selection" })
+-- Inline prompts for quick edits (this is what you want!)
+vim.keymap.set("v", "<leader>gr", function()
+  -- Save the visual selection marks
+  local start_line = vim.fn.line("'<")
+  local end_line = vim.fn.line("'>")
+  local start_col = vim.fn.col("'<")
+  local end_col = vim.fn.col("'>")
+
+  vim.ui.input({ prompt = "Prompt: " }, function(input)
+    if input and input ~= "" then
+      -- Restore visual selection
+      vim.fn.setpos("'<", {0, start_line, start_col, 0})
+      vim.fn.setpos("'>", {0, end_line, end_col, 0})
+      -- Execute command
+      vim.cmd(string.format("'<,'>CodeCompanion %s", input))
+    end
+  end)
+end, { desc = "AI inline prompt on selection" })
 
 -- LSP and diagnostic settings
 vim.o.completeopt = "menuone,noselect"
