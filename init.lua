@@ -94,23 +94,15 @@ cmp.setup({
 })
 
 -- LSP setup with nvim-cmp capabilities
-local nvim_lsp = require('lspconfig')
-local capabilities = require('cmp_nvim_lsp').default_capabilities()
+local nvim_lsp = require("lspconfig")
+local mason_lspconfig = require("mason-lspconfig")
 
-require('mason-lspconfig').setup_handlers({
-  function(server_name)
-    local opts = {
-      capabilities = capabilities,
-      on_attach = function(_, bufnr)
-        local bufopts = { silent = true, buffer = bufnr }
-        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
-        vim.keymap.set('n', 'gtD', vim.lsp.buf.type_definition, bufopts)
-        vim.keymap.set('n', 'grf', vim.lsp.buf.references, bufopts)
-        vim.keymap.set('n', 'g<space>p', vim.lsp.buf.format, bufopts)
-      end
-    }
-    nvim_lsp[server_name].setup(opts)
-  end
+-- Mason setup (if not already)
+require("mason").setup()
+
+mason_lspconfig.setup({
+  ensure_installed = { "lua_ls", "ts_ls", "ltex", "pyright" }, -- ← change to your servers
+  automatic_enable = false, -- we will configure manually below
 })
 
 -- LSP settings for Make "vim" global variable available in Lua files
@@ -243,18 +235,15 @@ vim.keymap.set("n", "<leader>wt", "<cmd>ObsidianToday<CR>", { desc = "Open today
 vim.keymap.set("n", "<leader>wy", "<cmd>ObsidianYesterday<CR>", { desc = "Open yesterday's daily note" })
 vim.keymap.set("n", "<leader>wtm", "<cmd>ObsidianTomorrow<CR>", { desc = "Open tomorrow's daily note" })
 
--- Vale LSP setup
-vim.env.VALE_CONFIG_PATH = "/Users/wata/.vale.ini" -- https://github.com/errata-ai/vale-ls/issues/4
+-- ltex-ls (LanguageTool) setup for grammar checking
 local lspconfig = require('lspconfig')
-lspconfig.vale_ls.setup({
-  cmd = {"vale-ls"},
-  filetypes = {"markdown", "tex", "text"},
+lspconfig.ltex.setup({
+  filetypes = {"markdown", "text", "tex"},
   settings = {
-    vale = {
-      Vale = {
-        cli = "/usr/local/bin/vale",
-        MinAlertLevel = suggestion
-      }
+    ltex = {
+      language = "en-US",
+      -- You can add more languages: ["en-US", "de-DE", "fr", etc.]
+      -- language = "auto", -- Auto-detect language
     }
   }
 })
