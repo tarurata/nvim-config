@@ -44,6 +44,12 @@ require("lazy").setup({
   { "MunifTanjim/nui.nvim" },               -- UI Component Library for Neovim
   { "github/copilot.vim" },                 -- GitHub Copilot for Vim
   {
+    "robitx/gp.nvim",                       -- ChatGPT and other LLM integration
+    config = function()
+      require("gp").setup()
+    end,
+  },
+  {
     "epwalsh/obsidian.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
   },
@@ -122,6 +128,34 @@ vim.cmd [[autocmd BufWritePre *.py lua vim.lsp.buf.format()]]
 -- Copilot settings
 vim.g.copilot_no_tab_map = true
 vim.api.nvim_set_keymap('i', '<Tab>', 'copilot#Accept("<CR>")', { silent = true, expr = true })
+
+-- gp.nvim configuration
+-- Set your API key as environment variable:
+-- export OPENAI_API_KEY="your-key-here"
+-- or for Claude: export ANTHROPIC_API_KEY="your-key-here"
+require("gp").setup({
+  providers = {
+    openai = {
+      endpoint = "https://api.openai.com/v1/chat/completions",
+      secret = os.getenv("OPENAI_API_KEY"),
+    },
+  },
+  agents = {
+    {
+      name = "ChatGPT4o-mini",
+      chat = true,
+      command = false,
+      model = { model = "gpt-4o-mini", temperature = 0.7, top_p = 1 },
+      system_prompt = "You are a helpful assistant.",
+    },
+  },
+})
+
+-- gp.nvim key mappings
+vim.keymap.set("n", "<leader>gc", "<cmd>GpChatNew<CR>", { desc = "New AI chat" })
+vim.keymap.set("v", "<leader>gp", ":<C-u>'<,'>GpChatPaste<CR>", { desc = "Paste selection to chat" })
+vim.keymap.set("v", "<leader>gr", ":<C-u>'<,'>GpRewrite<CR>", { desc = "AI rewrite selection" })
+vim.keymap.set("v", "<leader>ga", ":<C-u>'<,'>GpAppend<CR>", { desc = "AI append after selection" })
 
 -- LSP and diagnostic settings
 vim.o.completeopt = "menuone,noselect"
