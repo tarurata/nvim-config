@@ -72,6 +72,22 @@ require("lazy").setup({
     end,
   },
   {
+    "Robitx/gp.nvim",
+    config = function()
+      require("gp").setup({
+        openai_api_key = os.getenv("OPENAI_API_KEY"),
+        -- Disable chat features since we're using codecompanion for that
+        chat_user_prefix = "💬:",
+        chat_assistant_prefix = "🤖:",
+        -- Configure Whisper settings
+        whisper = {
+          enabled = true,
+          model = "whisper-1",
+        },
+      })
+    end,
+  },
+  {
     "epwalsh/obsidian.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
   },
@@ -177,6 +193,10 @@ vim.keymap.set("v", "<leader>gr", function()
     end
   end)
 end, { desc = "AI inline prompt on selection" })
+
+-- Whisper voice transcription keybindings
+vim.keymap.set({"n", "i"}, "<leader>v", "<cmd>GpWhisper<CR>", { desc = "Whisper voice transcription" })
+vim.keymap.set("v", "<leader>v", ":<C-u>'<,'>GpWhisper<CR>", { desc = "Whisper voice transcription (replace selection)" })
 
 -- LSP and diagnostic settings
 vim.o.completeopt = "menuone,noselect"
