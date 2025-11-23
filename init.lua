@@ -278,10 +278,21 @@ require("obsidian").setup({
       path = obsidian_work_vault,
     },
   },
+  templates = {
+    folder = "templates",  -- Folder in your vault where templates are stored
+    date_format = "%Y-%m-%d",
+    time_format = "%H:%M",
+  },
   daily_notes = {
     folder = "journal",
     date_format = "%y_%m_%d",
-    template = nil,
+    template = "daily_template.md",  -- Name of the template file in your templates folder
+  },
+  ui = {
+    checkboxes = {
+      [" "] = { char = "󰄱", hl_group = "ObsidianTodo" },
+      ["x"] = { char = "", hl_group = "ObsidianDone" },
+    },
   },
 })
 
