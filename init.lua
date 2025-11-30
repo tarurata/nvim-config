@@ -314,6 +314,31 @@ require("obsidian").setup({
       ["x"] = { char = "", hl_group = "ObsidianDone" },
     },
   },
+  note_id_func = function(title)
+    if title and title ~= "" then
+      -- Sanitize the title to be a valid filename:
+      -- Replace spaces with hyphens, convert to lowercase, and remove invalid characters.
+      local sanitized_title = title:gsub(" ", "-"):gsub("[^%w%s%-]", ""):lower()
+      return sanitized_title
+    else
+      -- Fallback if no title is provided (e.g., generate a timestamp-based ID)
+      return os.date("note-%Y%m%d-%H%M%S")
+    end
+  end,
+
+  -- Optional: If you want to ensure the title is also added as an alias in frontmatter
+  note_frontmatter_func = function(note)
+    if note.title then
+      note:add_alias(note.title)
+    end
+    local out = { id = note.id, aliases = note.aliases, tags = note.tags }
+    if note.metadata ~= nil and not vim.tbl_isempty(note.metadata) then
+      for k, v in pairs(note.metadata) do
+        out[k] = v
+      end
+    end
+    return out
+  end,
 })
 
 -- Obsidian key mappings
