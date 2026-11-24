@@ -137,8 +137,7 @@ cmp.setup({
   }),
 })
 
--- LSP setup with nvim-cmp capabilities
-local nvim_lsp = require("lspconfig")
+-- LSP setup (Neovim 0.11+ native API: vim.lsp.config / vim.lsp.enable)
 local mason_lspconfig = require("mason-lspconfig")
 
 -- Mason setup (if not already)
@@ -150,7 +149,7 @@ mason_lspconfig.setup({
 })
 
 -- LSP settings for Make "vim" global variable available in Lua files
-require('lspconfig').lua_ls.setup({
+vim.lsp.config('lua_ls', {
     settings = {
         Lua = {
             diagnostics = {
@@ -159,6 +158,7 @@ require('lspconfig').lua_ls.setup({
         }
     }
 })
+vim.lsp.enable('lua_ls')
 
 -- Autocommand for formatting Python files
 vim.cmd [[autocmd BufWritePre *.py lua vim.lsp.buf.format()]]
@@ -283,19 +283,14 @@ vim.cmd [[syntax on]]
 vim.o.backspace = "indent,eol,start" -- Make backspace behave more intuitively in insert mode
 
 -- Obsidian.nvim setup
-local obsidian_personal_vault = "/Users/wata/Library/Mobile Documents/iCloud~md~obsidian/Documents/personal-wiki"
-local obsidian_journal_directory = "/Users/wata/Library/Mobile Documents/iCloud~md~obsidian/Documents/personal-wiki/journal"
-local obsidian_work_vault = "/Users/wata/work-wiki"
+local obsidian_personal_vault = "/Users/wata/Obsidian/personal-wiki"
+local obsidian_journal_directory = "/Users/wata/Obsidian/personal-wiki/journal"
 
 require("obsidian").setup({
   workspaces = {
     {
       name = "personal",
       path = obsidian_personal_vault,
-    },
-    {
-      name = "work",
-      path = obsidian_work_vault,
     },
   },
   templates = {
@@ -347,8 +342,7 @@ vim.keymap.set("n", "<leader>wy", "<cmd>ObsidianYesterday<CR>", { desc = "Open y
 vim.keymap.set("n", "<leader>wtm", "<cmd>ObsidianTomorrow<CR>", { desc = "Open tomorrow's daily note" })
 
 -- ltex-ls (LanguageTool) setup for grammar checking
-local lspconfig = require('lspconfig')
-lspconfig.ltex.setup({
+vim.lsp.config('ltex', {
   filetypes = {"markdown", "text", "tex"},
   settings = {
     ltex = {
@@ -358,6 +352,7 @@ lspconfig.ltex.setup({
     }
   }
 })
+vim.lsp.enable('ltex')
 
 -- Open daily note using obsidian.nvim's built-in feature
 -- Set this global variable from shell: vim -c "let g:open_journal=1"
