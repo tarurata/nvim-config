@@ -35,6 +35,26 @@ require("lazy").setup({
   { "hrsh7th/cmp-nvim-lsp" },               -- LSP source for nvim-cmp
   { "hrsh7th/cmp-buffer" },                 -- Buffer completions
   { "hrsh7th/cmp-path" },                   -- Path completions
+  {
+    "milanglacier/minuet-ai.nvim",
+    config = function()
+      require("minuet").setup({
+        provider = "openai_compatible",
+        provider_options = {
+          openai_compatible = {
+            api_key = "OPENAI_API_KEY",
+            end_point = "https://api.openai.com/v1/chat/completions",
+            model = "gpt-4o-mini",
+            name = "openai",
+            optional = {
+              max_tokens = 256,
+              top_p = 0.9,
+            },
+          },
+        },
+      })
+    end,
+  },
   { "neovim/nvim-lspconfig" },              -- Quickstart configs for Nvim LSP
   { "williamboman/mason.nvim" },            -- Portable package manager for Neovim
   { "williamboman/mason-lspconfig.nvim" },  -- Bridge between mason.nvim and lspconfig
@@ -42,7 +62,6 @@ require("lazy").setup({
   { "nvim-lua/plenary.nvim" },              -- Lua functions library
   { "folke/noice.nvim" },                   -- Highly experimental plugin that replaces the UI for messages, cmdline and the popupmenu
   { "MunifTanjim/nui.nvim" },               -- UI Component Library for Neovim
-  { "github/copilot.vim" },                 -- GitHub Copilot for Vim
   {
     "olimorris/codecompanion.nvim",
     dependencies = {
@@ -106,7 +125,23 @@ require("lazy").setup({
 })
 
 -- Noice setup
-require("noice").setup()
+require("noice").setup({
+  messages = {
+    timeout = 5000, -- 5 seconds
+  },
+  popupmenu = {
+    enabled = false, -- Disable Noice's popupmenu UI to prevent conflicts
+  },
+  routes = {
+    {
+      filter = {
+        event = "msg_show",
+        find = "NERDTree Menu", -- A string to identify the NERDTree menu
+      },
+      opts = { skip = true },
+    },
+  },
+})
 
 -- Mason and LSP settings
 require('mason').setup({
@@ -131,10 +166,14 @@ cmp.setup({
     ['<C-p>'] = cmp.mapping.select_prev_item(),
   }),
   sources = cmp.config.sources({
+    { name = 'minuet' },
     { name = 'nvim_lsp' },
     { name = 'buffer' },
     { name = 'path' },
   }),
+  performance = {
+    fetching_timeout = 2000,
+  },
 })
 
 -- LSP setup (Neovim 0.11+ native API: vim.lsp.config / vim.lsp.enable)
@@ -162,10 +201,6 @@ vim.lsp.enable('lua_ls')
 
 -- Autocommand for formatting Python files
 vim.cmd [[autocmd BufWritePre *.py lua vim.lsp.buf.format()]]
-
--- Copilot settings
-vim.g.copilot_no_tab_map = true
-vim.api.nvim_set_keymap('i', '<Tab>', 'copilot#Accept("<CR>")', { silent = true, expr = true })
 
 -- codecompanion.nvim key mappings
 -- Set your API key as environment variable: export OPENAI_API_KEY="your-key-here"
